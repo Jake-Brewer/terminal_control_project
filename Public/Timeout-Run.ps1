@@ -1,3 +1,6 @@
+$TimeoutRunVersion = '2025-07-02 20:59:39'
+$TimeoutRunBuildTime = '2025-07-02 20:59:39'
+
 function Timeout-Run {
     <#!
 .SYNOPSIS
@@ -26,6 +29,8 @@ function Timeout-Run {
         [Parameter(Position = 1, Mandatory = $true, ValueFromRemainingArguments = $true)]
         [string[]]$CommandArgs
     )
+
+    Write-Host "[timeout-run] Version: $TimeoutRunVersion | Build: $TimeoutRunBuildTime" -ForegroundColor Green
 
     # Detect LLM/IDE terminals (Cursor, VSCode, Windsurf)
     $inLLMTerminal = $false
@@ -66,7 +71,20 @@ function Timeout-Run {
     $startInfo.RedirectStandardOutput = $false
     $startInfo.RedirectStandardError = $false
     $startInfo.UseShellExecute = $true
-    $process = [System.Diagnostics.Process]::Start($startInfo)
+    $process = $null
+    try {
+        $process = [System.Diagnostics.Process]::Start($startInfo)
+    }
+    catch {
+        Write-Host "[timeout-run] ERROR: Failed to start process: $exe $args" -ForegroundColor Red
+        Write-Host $_.Exception.Message -ForegroundColor Red
+        exit 127
+    }
+
+    if (-not $process) {
+        Write-Host "[timeout-run] ERROR: Process object is null after start attempt." -ForegroundColor Red
+        exit 127
+    }
 
     $remaining = $TimeoutSeconds
     $interval = 1
@@ -80,7 +98,7 @@ function Timeout-Run {
 
     if (-not $process.HasExited) {
         Write-Host "\nERROR: Command timed out after $TimeoutSeconds seconds: $exe $args" -ForegroundColor Red
-        $process.Kill()
+        try { $process.Kill() } catch {}
         exit 124
     }
     exit $process.ExitCode
