@@ -6,7 +6,7 @@ Describe 'Timeout-Run' {
 
     Context 'Happy path: command completes before timeout' {
         It 'should output text and exit 0' {
-            $result = & powershell.exe -NoProfile -File $timeoutScript --% 3 echo happy-path
+            $result = & powershell.exe -NoProfile -File $timeoutScript 3 cmd /c echo happy-path
             $result | Should -Match 'happy-path'
         }
     }
@@ -14,7 +14,7 @@ Describe 'Timeout-Run' {
     Context 'Sad path: command exceeds timeout' {
         It 'should time out and exit 124' {
             $sw = [System.Diagnostics.Stopwatch]::StartNew()
-            $proc = Start-Process powershell.exe -ArgumentList "-NoProfile -File `"$timeoutScript`" --% 1 timeout /t 5 /nobreak" -NoNewWindow -PassThru -Wait
+            $proc = Start-Process powershell.exe -ArgumentList "-NoProfile -File `"$timeoutScript`" 1 timeout /t 5 /nobreak" -NoNewWindow -PassThru -Wait
             $sw.Stop()
             $proc.ExitCode | Should -Be 124
             $sw.Elapsed.TotalSeconds | Should -BeLessThan 3
@@ -23,21 +23,21 @@ Describe 'Timeout-Run' {
 
     Context 'Quoted command' {
         It 'should handle quoted echo command' {
-            $result = & powershell.exe -NoProfile -File $timeoutScript --% 2 echo "quoted test"
+            $result = & powershell.exe -NoProfile -File $timeoutScript 2 cmd /c echo "quoted test"
             $result | Should -Match 'quoted test'
         }
     }
 
     Context 'cmd /c command' {
         It 'should handle cmd /c echo' {
-            $result = & powershell.exe -NoProfile -File $timeoutScript --% 2 cmd /c echo from-cmd
+            $result = & powershell.exe -NoProfile -File $timeoutScript 2 cmd /c echo from-cmd
             $result | Should -Match 'from-cmd'
         }
     }
 
     Context 'Complex PowerShell command' {
         It 'should handle script block and pipeline' {
-            $result = & powershell.exe -NoProfile -File $timeoutScript --% 3 powershell -NoProfile -Command "1..3 | ForEach-Object { $_ * 2 } | Out-String"
+            $result = & powershell.exe -NoProfile -File $timeoutScript 3 powershell -NoProfile -Command "1..3 | ForEach-Object { $_ * 2 } | Out-String"
             $result | Should -Match '2'
             $result | Should -Match '4'
             $result | Should -Match '6'
@@ -48,7 +48,7 @@ Describe 'Timeout-Run' {
         $testFile = Join-Path $env:TEMP "timeout-run-testfile.txt"
         AfterEach { if (Test-Path $testFile) { Remove-Item $testFile -Force } }
         It 'should not leave files behind' {
-            & powershell.exe -NoProfile -File $timeoutScript --% 2 cmd /c "echo test > $testFile"
+            & powershell.exe -NoProfile -File $timeoutScript 2 cmd /c "echo test > $testFile"
             Test-Path $testFile | Should -Be $true
             Remove-Item $testFile -Force
             Start-Sleep -Milliseconds 500
