@@ -5,6 +5,10 @@ param(
     [string[]]$CommandArgs
 )
 
+# Wrapper for Timeout-Run function (see docs/POWERSHELL_BEST_PRACTICES.md)
+. "$PSScriptRoot/Public/Timeout-Run.ps1"
+Timeout-Run -TimeoutSeconds $TimeoutSeconds -CommandArgs $CommandArgs
+
 # Detect LLM/IDE terminals (Cursor, VSCode, Windsurf)
 $inLLMTerminal = $false
 if ($env:TERM_PROGRAM -eq "vscode" -or $env:CURSOR_SESSION -or $env:WIND_SURF_SESSION) {
